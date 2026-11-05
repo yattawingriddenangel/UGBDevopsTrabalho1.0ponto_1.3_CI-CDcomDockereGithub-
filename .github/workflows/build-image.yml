@@ -1,0 +1,39 @@
+name: Build e Push da Imagem
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/yattawingriddenangel/ugb-devops-ci-cd
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v6
+
+      - name: Login no GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin
+
+      - name: Build da imagem
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Push da imagem latest
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:latest
+
+
+      - name: Push da imagem versionada
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
